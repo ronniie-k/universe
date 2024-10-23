@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/application/Application.cpp.o -c /home/ronnie/dev/universe/src/application/Application.cpp",
+  "file": "/home/ronnie/dev/universe/src/application/Application.cpp",
+  "output": "src/CMakeFiles/universe.dir/application/Application.cpp.o"
+},
+{
+  "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/main.cpp.o -c /home/ronnie/dev/universe/src/main.cpp",
+  "file": "/home/ronnie/dev/universe/src/main.cpp",
+  "output": "src/CMakeFiles/universe.dir/main.cpp.o"
+},
+{
+  "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/vulkan/Device.cpp.o -c /home/ronnie/dev/universe/src/vulkan/Device.cpp",
+  "file": "/home/ronnie/dev/universe/src/vulkan/Device.cpp",
+  "output": "src/CMakeFiles/universe.dir/vulkan/Device.cpp.o"
+}
+]

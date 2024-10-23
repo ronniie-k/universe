@@ -1,0 +1,7 @@
+# ninja log v6
+1	193	1726937983689798819	CMakeFiles/universe.dir/src/application/Application.cpp.o	7eb1919b89384392
+2	3993	1727481364038224170	src/CMakeFiles/universe.dir/vulkan/Device.cpp.o	b04c8e8aab64465a
+2	3509	1727481364038224170	src/CMakeFiles/universe.dir/application/Application.cpp.o	d7ec0dedbbfd7e5e
+2	3078	1727481364038224170	src/CMakeFiles/universe.dir/main.cpp.o	7f81f5bead4004ea
+3993	4183	1727481368028190200	src/universe	63091ab90de30213
+0	3	1726939253889803020	clean	a31eedcededa8236
