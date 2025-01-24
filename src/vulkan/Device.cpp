@@ -1,70 +1,100 @@
 #include "Device.h"
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#include <spdlog/spdlog.h>
+#include <unordered_set>
 
-Device::Device()
+#include "vulkan/DebugHelper.h"
+#include "vulkan/Utils.h"
+
+VulkanDevice::~VulkanDevice()
 {
 }
 
-
-Device::~Device()
+void VulkanDevice::create(vk::Instance instance, vk::SurfaceKHR surface)
 {
-	m_instance.destroy();
+	m_instance = instance;
+	pickPhysicalDevice(surface);
+	createDevice(surface);
 }
 
-void Device::createInstance()
+void VulkanDevice::destroy()
 {
-	if (m_enableValidationLayers && !hasValidationLayerSupport())
+	handle.destroy();
+}
+
+void VulkanDevice::createDevice(vk::SurfaceKHR surface)
+{
+	std::array<float, 1> priorities = { 1.f };
+	vulkan_utils::QueueFamilyIndices indices = vulkan_utils::findQueueFamilies(m_physicalDevice, surface);
+	std::unordered_set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+
+	std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+	for (uint32_t queueFamily : uniqueQueueFamilies)
 	{
-		spdlog::critical("could not load validation layers");
-		throw std::runtime_error("could not load validation layers");
+		vk::DeviceQueueCreateInfo queueCreateInfo {};
+		queueCreateInfo.setQueueFamilyIndex(queueFamily);
+		queueCreateInfo.setQueueCount(1);
+		queueCreateInfo.setQueuePriorities(priorities);
+		queueCreateInfos.push_back(queueCreateInfo);
 	}
-	uint32_t glfwExtensionCount = 0;
-	const char** glfwExtensions;
 
-	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	vk::PhysicalDeviceFeatures deviceFeatures;
 
-	vk::ApplicationInfo appInfo("hello triangle", VK_MAKE_VERSION(1, 0, 0), "no engine", VK_MAKE_VERSION(1, 0, 0),
-								vk::ApiVersion10);
+	vk::DeviceCreateInfo createInfo;
+	createInfo.setQueueCreateInfos(queueCreateInfos);
+	createInfo.setPEnabledFeatures(&deviceFeatures);
+	createInfo.setPEnabledExtensionNames(m_extensions);
 
-	vk::InstanceCreateInfo info;
-	info.setPApplicationInfo(&appInfo);
-	info.setEnabledExtensionCount(glfwExtensionCount);
-	info.setPpEnabledExtensionNames(glfwExtensions);
-	if (m_enableValidationLayers)
-	{
-		info.setPEnabledLayerNames(m_validationLayers);
-	}
-	info.setEnabledLayerCount(0);
-	m_instance = vk::createInstance(info);
+	if (DebugHelper::validationLayersEnabled())
+		createInfo.setPEnabledLayerNames(DebugHelper::getValidationLayers());
+	else
+		createInfo.enabledLayerCount = 0;
+
+	handle = m_physicalDevice.createDevice(createInfo);
+
+	m_graphicsQueue = handle.getQueue(indices.graphicsFamily.value(), 0);
+	m_presentQueue = handle.getQueue(indices.presentFamily.value(), 0);
 }
 
-void Device::printAvailableExtensions()
+void VulkanDevice::pickPhysicalDevice(vk::SurfaceKHR surface)
 {
-	std::vector<vk::ExtensionProperties> extensions = vk::enumerateInstanceExtensionProperties();
+	auto devices = m_instance.enumeratePhysicalDevices();
 
-	spdlog::info("--available extensions--");
-	for (const auto& extension : extensions)
+	for (const auto& device : devices)
 	{
-		spdlog::info("{}", extension.extensionName.data());
-	}
-}
-
-bool Device::hasValidationLayerSupport()
-{
-	std::vector<vk::LayerProperties> layers = vk::enumerateInstanceLayerProperties();
-
-	for (const char* validationLayerName : m_validationLayers)
-	{
-		for (const vk::LayerProperties& layer : layers)
+		if (isDeviceSuitable(device, surface))
 		{
-			if (strcmp(layer.layerName, validationLayerName) == 0)
-			{
-				return true;
-			}
+			m_physicalDevice = device;
+			return;
 		}
 	}
-	return false;
+
+	spdlog::error("failed to find GPU");
+	throw std::runtime_error("failed to find a suitable GPU");
+}
+
+bool VulkanDevice::extensionsSupported(vk::PhysicalDevice device)
+{
+	std::vector<vk::ExtensionProperties> extensions = device.enumerateDeviceExtensionProperties();
+	std::unordered_set<std::string> requiredExtensions(m_extensions.begin(), m_extensions.end());
+
+	for (const auto& extension : extensions)
+	{
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
+}
+
+bool VulkanDevice::isDeviceSuitable(vk::PhysicalDevice device, vk::SurfaceKHR surface)
+{
+	vulkan_utils::QueueFamilyIndices indices = vulkan_utils::findQueueFamilies(device, surface);
+
+	bool swapchainSupport = false;
+	if (extensionsSupported(device))
+	{
+		auto swapchainInfo = vulkan_utils::getSwapchainSupportInfo(device, surface);
+		swapchainSupport = !swapchainInfo.formats.empty() && !swapchainInfo.presentModes.empty();
+	}
+
+	return indices.isValid() && swapchainSupport;
 }

@@ -2,54 +2,39 @@
 
 #include <spdlog/spdlog.h>
 
+#include "vulkan/Window.h"
+
 Application::Application()
 {
-	spdlog::set_level(spdlog::level::debug); // Set global log level to debug
+	spdlog::set_level(spdlog::level::trace);
 	spdlog::set_pattern("(%T) [%^%l%$]: %v");
 }
 
 Application::~Application()
 {
-	glfwDestroyWindow(m_window);
-	glfwTerminate();
+	cleanup();
 }
 
 void Application::run()
 {
-	initWindow();
-	initVulkan();
+	m_window.create();
+	m_renderer.initVulkan(&m_window);
+	m_renderer.createPipeline("res/shaders/output/vert.spv", "res/shaders/output/frag.spv");
 	mainLoop();
-	cleanup();
 }
 
 void Application::mainLoop()
 {
-	while (!glfwWindowShouldClose(m_window))
+	auto* window = m_window.getGLFWWindow();
+	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+		m_renderer.drawFrame();
 	}
-}
-
-void Application::initVulkan()
-{
-	m_device.createInstance();
-	m_device.printAvailableExtensions();
-}
-
-void Application::initWindow()
-{
-	const uint32_t width  = 800;
-	const uint32_t height = 600;
-
-	glfwInit();
-	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	m_window = glfwCreateWindow(800, 600, "Vulkan", nullptr, nullptr);
+	m_renderer.waitIdle();
 }
 
 void Application::cleanup()
 {
-	glfwDestroyWindow(m_window);
-	glfwTerminate();
+	m_window.destroy();
 }

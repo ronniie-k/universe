@@ -1,27 +1,43 @@
-#include <vulkan/vulkan.hpp>
+#pragma once
+
 #include <vector>
 
-class Device
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+#include <vulkan/vulkan.hpp>
+#include <spdlog/spdlog.h>
+
+class VulkanInstance;
+
+class VulkanDevice
 {
 public:
-	Device();
-	~Device();
+	~VulkanDevice();
 
-	vk::Instance& getInstance() { return m_instance; }
+	void create(vk::Instance instance, vk::SurfaceKHR surface);
+	void destroy();
 
-	void createInstance();
-	void printAvailableExtensions();
+	vk::PhysicalDevice getDevice() { return m_physicalDevice; }
+
+	const vk::Queue& getGraphicsQueue() const { return m_graphicsQueue; }
+	const vk::Queue& getPresentQueue() const { return m_presentQueue; }
+
+	vk::Device handle;
 
 private:
-	bool hasValidationLayerSupport();
+	void pickPhysicalDevice(vk::SurfaceKHR surface);
+	void createDevice(vk::SurfaceKHR surface);
+
+	bool extensionsSupported(vk::PhysicalDevice device);
+	bool isDeviceSuitable(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 
 private:
 	vk::Instance m_instance;
+	vk::PhysicalDevice m_physicalDevice;
 
-#ifdef DEBUG
-	bool m_enableValidationLayers = true;
-#else
-	bool m_enableValidationLayers = false;
-#endif
-	const std::vector<const char*> m_validationLayers = { "VK_LAYER_KHRONOS_validation" };
+	vk::Queue m_graphicsQueue;
+	vk::Queue m_presentQueue;
+
+	const std::vector<const char*> m_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 };

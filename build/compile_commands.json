@@ -13,8 +13,50 @@
 },
 {
   "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/renderer/Renderer.cpp.o -c /home/ronnie/dev/universe/src/renderer/Renderer.cpp",
+  "file": "/home/ronnie/dev/universe/src/renderer/Renderer.cpp",
+  "output": "src/CMakeFiles/universe.dir/renderer/Renderer.cpp.o"
+},
+{
+  "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/vulkan/DebugHelper.cpp.o -c /home/ronnie/dev/universe/src/vulkan/DebugHelper.cpp",
+  "file": "/home/ronnie/dev/universe/src/vulkan/DebugHelper.cpp",
+  "output": "src/CMakeFiles/universe.dir/vulkan/DebugHelper.cpp.o"
+},
+{
+  "directory": "/home/ronnie/dev/universe/build",
   "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/vulkan/Device.cpp.o -c /home/ronnie/dev/universe/src/vulkan/Device.cpp",
   "file": "/home/ronnie/dev/universe/src/vulkan/Device.cpp",
   "output": "src/CMakeFiles/universe.dir/vulkan/Device.cpp.o"
+},
+{
+  "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/vulkan/Instance.cpp.o -c /home/ronnie/dev/universe/src/vulkan/Instance.cpp",
+  "file": "/home/ronnie/dev/universe/src/vulkan/Instance.cpp",
+  "output": "src/CMakeFiles/universe.dir/vulkan/Instance.cpp.o"
+},
+{
+  "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/vulkan/Window.cpp.o -c /home/ronnie/dev/universe/src/vulkan/Window.cpp",
+  "file": "/home/ronnie/dev/universe/src/vulkan/Window.cpp",
+  "output": "src/CMakeFiles/universe.dir/vulkan/Window.cpp.o"
+},
+{
+  "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/vulkan/image/ImageView.cpp.o -c /home/ronnie/dev/universe/src/vulkan/image/ImageView.cpp",
+  "file": "/home/ronnie/dev/universe/src/vulkan/image/ImageView.cpp",
+  "output": "src/CMakeFiles/universe.dir/vulkan/image/ImageView.cpp.o"
+},
+{
+  "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/vulkan/pipeline/GraphicsPipeline.cpp.o -c /home/ronnie/dev/universe/src/vulkan/pipeline/GraphicsPipeline.cpp",
+  "file": "/home/ronnie/dev/universe/src/vulkan/pipeline/GraphicsPipeline.cpp",
+  "output": "src/CMakeFiles/universe.dir/vulkan/pipeline/GraphicsPipeline.cpp.o"
+},
+{
+  "directory": "/home/ronnie/dev/universe/build",
+  "command": "/usr/bin/clang++ -DDEBUG -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/ronnie/dev/universe/src -g -std=gnu++17 -o src/CMakeFiles/universe.dir/vulkan/swapchain/Swapchain.cpp.o -c /home/ronnie/dev/universe/src/vulkan/swapchain/Swapchain.cpp",
+  "file": "/home/ronnie/dev/universe/src/vulkan/swapchain/Swapchain.cpp",
+  "output": "src/CMakeFiles/universe.dir/vulkan/swapchain/Swapchain.cpp.o"
 }
 ]
