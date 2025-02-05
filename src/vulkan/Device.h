@@ -1,5 +1,6 @@
 #pragma once
 
+#include "vk_mem_alloc.h"
 #include <vector>
 
 #define GLFW_INCLUDE_VULKAN
@@ -18,7 +19,8 @@ public:
 	void create(vk::Instance instance, vk::SurfaceKHR surface);
 	void destroy();
 
-	vk::PhysicalDevice getDevice() { return m_physicalDevice; }
+	vk::PhysicalDevice getPhysicalDevice() { return m_physicalDevice; }
+	VmaAllocator getAllocator() { return m_allocator; }
 
 	const vk::Queue& getGraphicsQueue() const { return m_graphicsQueue; }
 	const vk::Queue& getPresentQueue() const { return m_presentQueue; }
@@ -28,6 +30,7 @@ public:
 private:
 	void pickPhysicalDevice(vk::SurfaceKHR surface);
 	void createDevice(vk::SurfaceKHR surface);
+	void createAllocator();
 
 	bool extensionsSupported(vk::PhysicalDevice device);
 	bool isDeviceSuitable(vk::PhysicalDevice device, vk::SurfaceKHR surface);
@@ -35,6 +38,7 @@ private:
 private:
 	vk::Instance m_instance;
 	vk::PhysicalDevice m_physicalDevice;
+	VmaAllocator m_allocator;
 
 	vk::Queue m_graphicsQueue;
 	vk::Queue m_presentQueue;

@@ -1,18 +1,16 @@
 #pragma once
 
 #include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_enums.hpp>
-#include <vulkan/vulkan_handles.hpp>
-#include <vulkan/vulkan_structs.hpp>
 
 #include "vulkan/image/ImageView.h"
+#include "vulkan/Device.h"
 
 class GLFWwindow;
 
 class VulkanSwapchain
 {
 public:
-	void create(vk::Device device, vk::PhysicalDevice physicalDevice, GLFWwindow* window);
+	void create(VulkanDevice& device, GLFWwindow* window);
 	void createSurface(vk::Instance handle, GLFWwindow* window);
 	void createFramebuffers(vk::RenderPass renderPass);
 	void destroy();

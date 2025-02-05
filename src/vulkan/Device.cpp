@@ -1,7 +1,9 @@
 #include "Device.h"
 
 #include <unordered_set>
+#include <vulkan/vulkan_core.h>
 
+#include "vk_mem_alloc.h"
 #include "vulkan/DebugHelper.h"
 #include "vulkan/Utils.h"
 
@@ -14,6 +16,7 @@ void VulkanDevice::create(vk::Instance instance, vk::SurfaceKHR surface)
 	m_instance = instance;
 	pickPhysicalDevice(surface);
 	createDevice(surface);
+	createAllocator();
 }
 
 void VulkanDevice::destroy()
@@ -53,6 +56,22 @@ void VulkanDevice::createDevice(vk::SurfaceKHR surface)
 
 	m_graphicsQueue = handle.getQueue(indices.graphicsFamily.value(), 0);
 	m_presentQueue = handle.getQueue(indices.presentFamily.value(), 0);
+}
+
+
+void VulkanDevice::VulkanDevice::createAllocator()
+{
+	VmaVulkanFunctions vulkanFunctions = {};
+	vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+	vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+	VmaAllocatorCreateInfo createInfo = {};
+	createInfo.physicalDevice = m_physicalDevice;
+	createInfo.device = handle;
+	createInfo.instance = m_instance;
+	createInfo.vulkanApiVersion = VK_API_VERSION_1_0;
+	createInfo.pVulkanFunctions = &vulkanFunctions;
+	vmaCreateAllocator(&createInfo, &m_allocator);
 }
 
 void VulkanDevice::pickPhysicalDevice(vk::SurfaceKHR surface)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "vulkan/swapchain/Swapchain.h"
 #include <vulkan/vulkan.hpp>
 #include <vector>
 #include <vulkan/vulkan_handles.hpp>
@@ -10,20 +11,24 @@ class VulkanGraphicsPipeline
 {
 public:
 	void create(vk::Device device,
+				VulkanSwapchain& swapchain,
 				const std::string& vertexSPV,
 				const std::string& fragSPV,
-				vk::Format swapchainFormat,
-				vk::Extent2D swapchainExtent);
+				vk::DescriptorSetLayout layout);
 	void destroy();
 
 	vk::RenderPass getRenderPass() { return m_renderPass; }
+	vk::PipelineLayout getLayout() { return m_layout; }
 
 	vk::Pipeline handle;
 
 private:
 	vk::PipelineShaderStageCreateInfo createShaderStage(const std::string& shaderSPV, vk::ShaderStageFlagBits stage);
 	void createRenderPass(vk::Format swapchainFormat);
-	void createPipeline(const std::string& vertexSPV, const std::string& fragSPV, vk::Extent2D swapchainExtent);
+	void createPipeline(const std::string& vertexSPV,
+						const std::string& fragSPV,
+						vk::Extent2D swapchainExtent,
+						vk::DescriptorSetLayout layout);
 
 private:
 	vk::Device m_device;

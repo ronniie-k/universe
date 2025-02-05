@@ -2,6 +2,12 @@
 #include <iostream>
 #include <stdexcept>
 
+#define VULKAN_HPP_NO_EXCEPTIONS
+#include <vulkan/vulkan.hpp>
+
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+
 #include "application/Application.h"
 
 int main()
@@ -21,4 +27,4 @@ int main()
 	return EXIT_SUCCESS;
 }
 
-// swamp chain recreation
+// refactor: Renderer and pipeline classes

@@ -68,6 +68,12 @@ inline std::vector<char> readFile(const std::string& filename)
 	return buffer;
 }
 
+inline const std::string getShaderRoot()
+{
+	// fix this when i decide how i want to store my shader files
+	return "res/shaders/output/";
+}
+
 inline QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, VkSurfaceKHR surface)
 {
 	QueueFamilyIndices indices;

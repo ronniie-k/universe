@@ -5,17 +5,17 @@
 #include <vulkan/vulkan_handles.hpp>
 
 #include "vulkan/Utils.h"
-
+#include "renderer/types/Vertex.h"
 
 void VulkanGraphicsPipeline::create(vk::Device device,
+									VulkanSwapchain& swapchain,
 									const std::string& vertexSPV,
 									const std::string& fragSPV,
-									vk::Format swapchainFormat,
-									vk::Extent2D swapchainExtent)
+									vk::DescriptorSetLayout layout)
 {
 	m_device = device;
-	createRenderPass(swapchainFormat);
-	createPipeline(vertexSPV, fragSPV, swapchainExtent);
+	createRenderPass(swapchain.getFormat());
+	createPipeline(vertexSPV, fragSPV, swapchain.getExtent(), layout);
 }
 
 void VulkanGraphicsPipeline::VulkanGraphicsPipeline::destroy()
@@ -85,15 +85,21 @@ void VulkanGraphicsPipeline::VulkanGraphicsPipeline::createRenderPass(vk::Format
 
 void VulkanGraphicsPipeline::VulkanGraphicsPipeline::createPipeline(const std::string& vertexSPV,
 																	const std::string& fragSPV,
-																	vk::Extent2D swapchainExtent)
+																	vk::Extent2D swapchainExtent,
+																	vk::DescriptorSetLayout layout)
 {
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages = { createShaderStage(vertexSPV, vk::ShaderStageFlagBits::eVertex),
-																	  createShaderStage(fragSPV, vk::ShaderStageFlagBits::eFragment) };
+	const std::string shaderRoot = vulkan_utils::getShaderRoot();
+	std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages = {
+		createShaderStage(shaderRoot + vertexSPV, vk::ShaderStageFlagBits::eVertex),
+		createShaderStage(shaderRoot + fragSPV, vk::ShaderStageFlagBits::eFragment)
+	};
 
+	auto bindingDescription = Vertex::getBindingDescription();
+	auto attributeDescription = Vertex::getAttributeDescription();
 	vk::PipelineVertexInputStateCreateInfo vertexInputState;
-	vertexInputState.vertexBindingDescriptionCount = 0;
-	vertexInputState.vertexAttributeDescriptionCount = 0;
-
+	vertexInputState.setVertexBindingDescriptionCount(1);
+	vertexInputState.setPVertexBindingDescriptions(&bindingDescription);
+	vertexInputState.setVertexAttributeDescriptions(attributeDescription);
 
 	vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
 	inputAssembly.setTopology(vk::PrimitiveTopology::eTriangleList);
@@ -130,7 +136,7 @@ void VulkanGraphicsPipeline::VulkanGraphicsPipeline::createPipeline(const std::s
 	rasterizer.setPolygonMode(vk::PolygonMode::eFill);
 	rasterizer.setLineWidth(1.f);
 	rasterizer.setCullMode(vk::CullModeFlagBits::eBack);
-	rasterizer.setFrontFace(vk::FrontFace::eClockwise);
+	rasterizer.setFrontFace(vk::FrontFace::eCounterClockwise);
 	rasterizer.setDepthBiasEnable(false);
 	rasterizer.setDepthBiasConstantFactor(0.f);
 	rasterizer.setDepthBiasClamp(0.f);
@@ -167,8 +173,9 @@ void VulkanGraphicsPipeline::VulkanGraphicsPipeline::createPipeline(const std::s
 	colorBlending.blendConstants[2] = 0.f;
 	colorBlending.blendConstants[3] = 0.f;
 
-	// pipeline layout, fix this later
 	vk::PipelineLayoutCreateInfo layoutCreateInfo;
+	layoutCreateInfo.setLayoutCount = 1;
+	layoutCreateInfo.pSetLayouts = &layout;
 
 	m_layout = m_device.createPipelineLayout(layoutCreateInfo);
 

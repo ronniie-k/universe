@@ -10,16 +10,11 @@ Application::Application()
 	spdlog::set_pattern("(%T) [%^%l%$]: %v");
 }
 
-Application::~Application()
-{
-	cleanup();
-}
-
 void Application::run()
 {
 	m_window.create();
 	m_renderer.initVulkan(&m_window);
-	m_renderer.createPipeline("res/shaders/output/vert.spv", "res/shaders/output/frag.spv");
+	// m_renderer.createPipeline("res/shaders/output/vert.spv", "res/shaders/output/frag.spv");
 	mainLoop();
 }
 

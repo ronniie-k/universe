@@ -10,3 +10,5 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 add_subdirectory(src)
+set(CMAKE_SUPPRESS_REGENERATION TRUE)
+add_subdirectory(thirdparty/vma)

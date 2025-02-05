@@ -17,11 +17,8 @@ public:
 	VulkanInstance();
 	~VulkanInstance();
 
-	void create(Window* window);
+	void create();
 	void destroy();
-
-	VulkanDevice& getDevice() { return m_device; }
-	VulkanSwapchain& getSwapchain() { return m_swapchain; }
 
 	vk::Instance handle;
 
@@ -30,6 +27,4 @@ private:
 
 private:
 	DebugHelper m_debugHelper;
-	VulkanDevice m_device;
-	VulkanSwapchain m_swapchain;
 };

@@ -1,5 +1,0 @@
-/home/ronnie/dev/universe/build/CMakeFiles/edit_cache.dir
-/home/ronnie/dev/universe/build/CMakeFiles/rebuild_cache.dir
-/home/ronnie/dev/universe/build/src/CMakeFiles/universe.dir
-/home/ronnie/dev/universe/build/src/CMakeFiles/edit_cache.dir
-/home/ronnie/dev/universe/build/src/CMakeFiles/rebuild_cache.dir

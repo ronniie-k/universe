@@ -1,63 +1,80 @@
 #include "Renderer.h"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
-#include <memory>
+#include <filesystem>
+#include <spdlog/spdlog.h>
 #include <stdexcept>
+#include <chrono>
+
 #include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_enums.hpp>
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+
 #include "vulkan/Device.h"
+#include "vulkan/memory/UniformBuffer.h"
 #include "vulkan/pipeline/GraphicsPipeline.h"
 #include "vulkan/swapchain/Swapchain.h"
 #include "vulkan/Utils.h"
+#include "types/Vertex.h"
+
+namespace
+{
+const std::vector<Vertex> vertices = { { { -0.5f, -0.5f }, { 1.0f, 0.0f, 1.0f } },
+									   { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
+									   { { 0.5f, 0.5f }, { 0.0f, 1.0f, 1.0f } },
+									   { { -0.5f, 0.5f }, { 1.0f, 0.0f, 1.0f } } };
+const std::vector<uint16_t> indices = { 0, 1, 2, 2, 3, 0 };
+} // namespace
 
 Renderer::Renderer()
 {
 }
 
-void Renderer::cleanup()
-{
-	m_instance.getDevice().handle.destroyCommandPool(m_commandPool);
-	VulkanDevice& device = m_instance.getDevice();
-	for (int i = 0; i < m_framesInFlight; i++)
-	{
-		device.handle.destroySemaphore(m_imgAvailableSemaphores[i]);
-		device.handle.destroySemaphore(m_renderFinishedSemaphores[i]);
-		device.handle.destroyFence(m_inFlightFences[i]);
-	}
-	m_instance.destroy();
-}
-
 void Renderer::initVulkan(Window* window)
 {
 	m_window = window;
-	m_instance.create(window);
+	auto* glfwWindow = m_window->getGLFWWindow();
+
+	m_instance.create();
+	m_swapchain.createSurface(m_instance.handle, glfwWindow);
+	m_device.create(m_instance.handle, m_swapchain.getSurface());
+	m_swapchain.create(m_device, glfwWindow);
+
 	createCommandObjects();
 	createSyncObjects();
-	// vulkan_utils::printAvailableExtensions();
-}
 
-void Renderer::createPipeline(const std::string& vertexSPV, const std::string& fragSPV)
-{
-	auto& swapchain = m_instance.getSwapchain();
-	m_pipeline.create(m_instance.getDevice().handle, vertexSPV, fragSPV, swapchain.getFormat(), swapchain.getExtent());
-	swapchain.createFramebuffers(m_pipeline.getRenderPass());
+	for (int i = 0; i < m_framesInFlight; i++)
+	{
+		VulkanUniformBuffer buffer;
+		buffer.create(m_device);
+		m_uniformBuffers.emplace_back(std::move(buffer));
+	}
+
+	m_vertexBuffer.create(m_device, vertices);
+	m_indexBuffer.create(m_device, indices);
+
+	m_pipelineDescriptor.create(m_device.handle, m_framesInFlight, m_uniformBuffers);
+
+	m_pipeline.create(m_device.handle, m_swapchain, "vert.spv", "frag.spv", m_pipelineDescriptor.getLayout());
+	m_swapchain.createFramebuffers(m_pipeline.getRenderPass());
 }
 
 void Renderer::createCommandObjects()
 {
-	VulkanDevice& device = m_instance.getDevice();
-	// command pool
 	vulkan_utils::QueueFamilyIndices queueFamilies =
-		vulkan_utils::findQueueFamilies(device.getDevice(), m_instance.getSwapchain().getSurface());
+		vulkan_utils::findQueueFamilies(m_device.getPhysicalDevice(), m_swapchain.getSurface());
 
 	vk::CommandPoolCreateInfo createInfo;
 	createInfo.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 	createInfo.setQueueFamilyIndex(queueFamilies.graphicsFamily.value());
 
-	m_commandPool = device.handle.createCommandPool(createInfo);
+	m_commandPool = m_device.handle.createCommandPool(createInfo);
 
 	m_commandBuffers.resize(m_framesInFlight);
 
@@ -66,7 +83,7 @@ void Renderer::createCommandObjects()
 	allocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
 	allocInfo.setCommandBufferCount(m_commandBuffers.size());
 
-	m_commandBuffers = device.handle.allocateCommandBuffers(allocInfo);
+	m_commandBuffers = m_device.handle.allocateCommandBuffers(allocInfo);
 }
 
 
@@ -79,18 +96,17 @@ void Renderer::createSyncObjects()
 	for (int i = 0; i < m_framesInFlight; i++)
 	{
 		vk::SemaphoreCreateInfo semaphoreCreateInfo;
-		m_imgAvailableSemaphores[i] = m_instance.getDevice().handle.createSemaphore(semaphoreCreateInfo);
-		m_renderFinishedSemaphores[i] = m_instance.getDevice().handle.createSemaphore(semaphoreCreateInfo);
+		m_imgAvailableSemaphores[i] = m_device.handle.createSemaphore(semaphoreCreateInfo);
+		m_renderFinishedSemaphores[i] = m_device.handle.createSemaphore(semaphoreCreateInfo);
 
 		vk::FenceCreateInfo fenceCreateInfo;
 		fenceCreateInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
-		m_inFlightFences[i] = m_instance.getDevice().handle.createFence(fenceCreateInfo);
+		m_inFlightFences[i] = m_device.handle.createFence(fenceCreateInfo);
 	}
 }
 
 void Renderer::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imgIndex)
 {
-	VulkanSwapchain& swapchain = m_instance.getSwapchain();
 	vk::CommandBufferBeginInfo info;
 	cmdBuffer.begin(info);
 
@@ -98,13 +114,13 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imgInde
 
 	vk::RenderPassBeginInfo renderPassInfo;
 	renderPassInfo.setRenderPass(m_pipeline.getRenderPass());
-	renderPassInfo.setFramebuffer(swapchain.getFramebuffer(imgIndex));
+	renderPassInfo.setFramebuffer(m_swapchain.getFramebuffer(imgIndex));
 	renderPassInfo.renderArea.offset = vk::Offset2D { 0, 0 };
-	renderPassInfo.renderArea.extent = swapchain.getExtent();
+	renderPassInfo.renderArea.extent = m_swapchain.getExtent();
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 
-	auto extent = swapchain.getExtent();
+	auto extent = m_swapchain.getExtent();
 	vk::Viewport viewport;
 	viewport.x = 0.f;
 	viewport.y = 0.f;
@@ -117,10 +133,18 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imgInde
 	scissor.offset = vk::Offset2D { 0, 0 };
 	scissor.extent = extent;
 
+	std::array<vk::Buffer, 1> vertexBuffers = { m_vertexBuffer.handle };
+	std::array<vk::DeviceSize, 1> offsets = { 0 };
+
 	cmdBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pipeline.handle);
 	cmdBuffer.setViewport(0, 1, &viewport);
 	cmdBuffer.setScissor(0, 1, &scissor);
+	cmdBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
+	cmdBuffer.bindIndexBuffer(m_indexBuffer.handle, 0, vk::IndexType::eUint16);
+	cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipeline.getLayout(), 0, 1,
+								 &m_pipelineDescriptor.getDescriptorSet(m_currentFrame), 0, nullptr);
+	cmdBuffer.drawIndexed(indices.size(), 1, 0, 0, 0);
 	cmdBuffer.draw(3, 1, 0, 0);
 
 	cmdBuffer.endRenderPass();
@@ -129,12 +153,11 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imgInde
 
 void Renderer::drawFrame()
 {
-	vk::Device device = m_instance.getDevice().handle;
-	VulkanSwapchain& swapchain = m_instance.getSwapchain();
+	VulkanSwapchain& swapchain = m_swapchain;
 
-	(void) device.waitForFences(1, &m_inFlightFences[m_currentFrame], true, UINT64_MAX);
+	(void) m_device.handle.waitForFences(1, &m_inFlightFences[m_currentFrame], true, UINT64_MAX);
 
-	auto nextImgResult = device.acquireNextImageKHR(swapchain.handle, UINT64_MAX, m_imgAvailableSemaphores[m_currentFrame]);
+	auto nextImgResult = m_device.handle.acquireNextImageKHR(swapchain.handle, UINT64_MAX, m_imgAvailableSemaphores[m_currentFrame]);
 	uint32_t imgIndex = nextImgResult.value;
 
 	if (nextImgResult.result == vk::Result::eErrorOutOfDateKHR)
@@ -147,7 +170,9 @@ void Renderer::drawFrame()
 		throw std::runtime_error("failed to acquire swapchain img");
 	}
 
-	(void) device.resetFences(1, &m_inFlightFences[m_currentFrame]);
+	(void) m_device.handle.resetFences(1, &m_inFlightFences[m_currentFrame]);
+
+	updateUniformBuffer();
 
 	m_commandBuffers[m_currentFrame].reset();
 	recordCommandBuffer(m_commandBuffers[m_currentFrame], imgIndex);
@@ -162,7 +187,7 @@ void Renderer::drawFrame()
 	submitInfo.setWaitDstStageMask(waitStages);
 	submitInfo.setCommandBuffers(cmdBuffers);
 
-	(void) m_instance.getDevice().getGraphicsQueue().submit(1, &submitInfo, m_inFlightFences[m_currentFrame]);
+	(void) m_device.getGraphicsQueue().submit(1, &submitInfo, m_inFlightFences[m_currentFrame]);
 
 	vk::PresentInfoKHR presentInfo;
 	presentInfo.setWaitSemaphores(signalSemaphores);
@@ -170,7 +195,7 @@ void Renderer::drawFrame()
 	presentInfo.pSwapchains = &swapchain.handle;
 	presentInfo.pImageIndices = &imgIndex;
 
-	vk::Result result = m_instance.getDevice().getPresentQueue().presentKHR(presentInfo);
+	vk::Result result = m_device.getPresentQueue().presentKHR(presentInfo);
 
 	if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || m_window->hasResized())
 	{
@@ -185,8 +210,28 @@ void Renderer::drawFrame()
 	m_currentFrame = (m_currentFrame + 1) % m_framesInFlight;
 }
 
+void Renderer::updateUniformBuffer()
+{
+	static auto startTime = std::chrono::high_resolution_clock::now();
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+	auto swapchianExtent = m_swapchain.getExtent();
+
+	UniformBufferData ubo {};
+	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ubo.proj = glm::perspective(glm::radians(45.0f), swapchianExtent.width / (float) swapchianExtent.height, 0.1f, 10.0f);
+
+	ubo.proj[1][1] *= -1;
+
+	m_uniformBuffers[m_currentFrame].copyData(&ubo, sizeof(UniformBufferData));
+}
 
 void Renderer::waitIdle()
 {
-	m_instance.getDevice().handle.waitIdle();
+	m_device.handle.waitIdle();
 }

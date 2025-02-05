@@ -6,10 +6,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-void VulkanSwapchain::create(vk::Device device, vk::PhysicalDevice physicalDevice, GLFWwindow* window)
+void VulkanSwapchain::create(VulkanDevice& device, GLFWwindow* window)
 {
-	m_device = device;
-	m_physicalDevice = physicalDevice;
+	m_device = device.handle;
+	m_physicalDevice = device.getPhysicalDevice();
 
 	createSwapchain(window);
 	createImageViews();
@@ -19,9 +19,9 @@ void VulkanSwapchain::VulkanSwapchain::destroy()
 {
 	for (auto framebuffer : m_frameBuffers)
 		m_device.destroyFramebuffer(framebuffer);
+	m_frameBuffers.clear();
 	m_imageViews.clear();
 	m_device.destroySwapchainKHR(handle);
-	m_instance.destroySurfaceKHR(m_surface);
 }
 
 void VulkanSwapchain::createSurface(vk::Instance instance, GLFWwindow* window)
@@ -159,13 +159,7 @@ void VulkanSwapchain::VulkanSwapchain::VulkanSwapchain::recreate(GLFWwindow* win
 
 	m_device.waitIdle();
 
-	// destroy swapchain components (not the renderpass or surface)
-	for (auto framebuffer : m_frameBuffers)
-		m_device.destroyFramebuffer(framebuffer);
-	m_frameBuffers.clear();
-	m_imageViews.clear();
-	m_device.destroySwapchainKHR(handle);
-
+	destroy();
 	createSwapchain(window);
 	createImageViews();
 	createFramebuffers(m_renderPass);

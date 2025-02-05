@@ -14,14 +14,10 @@ VulkanInstance::~VulkanInstance()
 {
 }
 
-void VulkanInstance::create(Window* window)
+void VulkanInstance::create()
 {
-	auto* glfwWindow = window->getGLFWWindow();
 	createInstance();
 	m_debugHelper.create(handle);
-	m_swapchain.createSurface(handle, glfwWindow);
-	m_device.create(handle, m_swapchain.getSurface());
-	m_swapchain.create(m_device.handle, m_device.getDevice(), glfwWindow);
 }
 
 void VulkanInstance::createInstance()
@@ -56,12 +52,8 @@ void VulkanInstance::createInstance()
 
 void VulkanInstance::destroy()
 {
-	m_swapchain.destroy();
-	m_device.destroy();
-
 	if (DebugHelper::validationLayersEnabled())
 		m_debugHelper.destroy();
 
-	handle.destroySurfaceKHR(m_swapchain.getSurface());
 	handle.destroy();
 }
